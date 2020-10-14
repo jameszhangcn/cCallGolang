@@ -1,0 +1,14 @@
+mode: count
+events/events/event.go:94.21,99.12 2 1
+events/events/event.go:99.12,100.7 1 1
+events/events/event.go:100.7,103.4 2 120
+events/events/handler.go:27.80,35.2 3 119
+events/events/handler.go:38.74,46.2 3 119
+events/main.go:8.13,15.12 6 1
+events/main.go:19.2,25.6 3 1
+events/main.go:36.2,36.34 1 1
+events/main.go:15.12,18.3 2 1
+events/main.go:25.6,26.10 1 1100660101
+events/main.go:27.15,28.9 1 0
+events/main.go:29.15,30.18 1 1
+events/main.go:31.11,31.11 0 1100660100

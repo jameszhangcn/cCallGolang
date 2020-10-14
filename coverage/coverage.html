@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">events/events/event.go (100.0%)</option>
+				
+				<option value="file1">events/events/handler.go (100.0%)</option>
+				
+				<option value="file2">events/main.go (93.3%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package event
+
+/*
+#cgo LDFLAGS:
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;string.h&gt;
+#include "event.h"
+
+extern int mdp_event_end_marker_handler(uint32_t ueID, uint8_t rbID, uint8_t tnl_type);
+extern int mdp_event_gtp_err_handler(uint32_t ueID, uint32_t teID, uint8_t rbID);
+
+void mdp_event_init(){
+        //TODO add mdp lib
+    // mdp_event_slave_init();
+    //mdp_event_slave_setup(NULL, (mdp_event_recv_t*)mdp_event_handler, false);
+        printf("\r\n mdp_event_init \r\n");
+        return;
+}
+
+int mdp_event_handler(void *data, uint32_t len, void* private){
+        mdp_event_hdr_t* eventHdr = (mdp_event_hdr_t*)data;
+        printf("\r\n Event type %d, len %d, thread %d", eventHdr-&gt;type, eventHdr-&gt;len, eventHdr-&gt;thread_index);
+
+        cu_up_event_t* upEvent = (cu_up_event_t*)((uint8_t*)data+sizeof(mdp_event_hdr_t));
+    printf("\r\n CUUP Event type %d ", upEvent-&gt;event);
+
+        switch(upEvent-&gt;event)
+        {
+                case CU_UP_EVENT_END_MARKER_IND:
+                {
+                        printf("CU_UP_EVENT_END_MARKER_IND");
+                        cu_up_end_marker_ind_t * end_marker = (cu_up_end_marker_ind_t*)malloc(sizeof(cu_up_end_marker_ind_t));
+                        *end_marker = upEvent-&gt;end_marker_ind;
+            mdp_event_end_marker_handler(end_marker-&gt;ue_id, end_marker-&gt;rb_id, end_marker-&gt;tnl_type);
+                        break;
+                }
+                case CU_UP_EVENT_GTP_ERR_IND:
+                {
+                        printf("CU_UP_EVENT_GTP_ERR_IND");
+                        cu_up_gtp_err_ind_t * gtp_err = (cu_up_gtp_err_ind_t*)malloc(sizeof(cu_up_gtp_err_ind_t));
+                        *gtp_err = upEvent-&gt;gtp_err_ind;
+            mdp_event_gtp_err_handler(gtp_err-&gt;ue_id, gtp_err-&gt;te_id, gtp_err-&gt;rb_id);
+
+                        break;
+                }
+                default:
+                        printf("Unsupported event %d", upEvent-&gt;event);
+                        break;
+        }
+
+        return 0;
+}
+
+void mdp_event_start_periodic(){
+    char data[100];
+    char private[20];
+    int len = 20;
+        printf("\r\n mdp_event_start_periodic \r\n ");
+        cu_up_event_t *event = (cu_up_event_t*)malloc(sizeof(cu_up_event_t)+sizeof(cu_up_end_marker_ind_t));
+        event-&gt;event = CU_UP_EVENT_END_MARKER_IND;
+        cu_up_end_marker_ind_t ind;
+        ind.ue_id = 1234;
+        ind.rb_id = 1;
+        ind.tnl_type = 1;
+        memcpy(&amp;(event-&gt;end_marker_ind),&amp;ind,sizeof(cu_up_end_marker_ind_t));
+        memcpy(data+sizeof(mdp_event_hdr_t),event,sizeof(cu_up_event_t)+sizeof(cu_up_end_marker_ind_t));
+        mdp_event_handler((void*)data,len,(void*)private);
+
+        cu_up_event_t *event1 = (cu_up_event_t*)malloc(sizeof(cu_up_event_t)+sizeof(cu_up_gtp_err_ind_t));
+        event1-&gt;event = CU_UP_EVENT_GTP_ERR_IND;
+        cu_up_gtp_err_ind_t ind1;
+        ind1.ue_id = 4321;
+        ind1.rb_id = 1;
+        ind1.te_id = 2345;
+        memcpy(&amp;(event1-&gt;gtp_err_ind),&amp;ind1,sizeof(cu_up_gtp_err_ind_t));
+        memcpy(data+sizeof(mdp_event_hdr_t),event1,sizeof(cu_up_event_t)+sizeof(cu_up_gtp_err_ind_t));
+        mdp_event_handler((void*)data,len,(void*)private);
+
+        return;
+}
+*/
+import "C"
+import (
+        "time"
+)
+
+const MAX_EVENT_DATA_LEN = 1024
+
+var eventData [MAX_EVENT_DATA_LEN]byte
+var eventPrivate [MAX_EVENT_DATA_LEN]byte
+
+func MdpEventInit() <span class="cov1" title="1">{
+
+        C.mdp_event_init()
+
+        //for testing
+        go func() </span><span class="cov1" title="1">{
+                for </span><span class="cov10" title="120">{
+                        time.Sleep(time.Second)
+                        C.mdp_event_start_periodic()
+                }</span>
+        }()
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package event
+
+import (
+        "C"
+        "fmt"
+)
+
+var (
+        eventsCounter     = 0
+        endMarkerMethodId int32
+        gtpErrorMethodId  int32
+)
+
+type stEndMarkerInd struct {
+        ue_id    uint32
+        rb_id    uint8
+        tnl_type uint8
+}
+
+type stGtpErrInd struct {
+        ue_id uint32
+        te_id uint32
+        rb_id uint8
+}
+
+//export mdp_event_end_marker_handler
+func mdp_event_end_marker_handler(ueID C.ulong, rbID C.uchar, tnlType C.uchar) <span class="cov10" title="119">{
+        fmt.Println("Received event end marker, ueID ", ueID)
+        ind := &amp;stEndMarkerInd{
+                ue_id:    uint32(ueID),
+                rb_id:    uint8(rbID),
+                tnl_type: uint8(tnlType),
+        }
+        fmt.Println(ind)
+}</span>
+
+//export mdp_event_gtp_err_handler
+func mdp_event_gtp_err_handler(ueID C.ulong, teID C.ulong, rbID C.uchar) <span class="cov10" title="119">{
+        fmt.Println("Received event gtp err, ueID", ueID)
+        ind := &amp;stGtpErrInd{
+                ue_id: uint32(ueID),
+                te_id: uint32(teID),
+                rb_id: uint8(rbID),
+        }
+        fmt.Println(ind)
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package main
+import (
+        "fmt"
+        "os"
+        "os/signal"
+        event "events/events"
+)
+func main() <span class="cov1" title="1">{
+        fmt.Println("main enter...")
+        exit := make(chan struct{})
+        //for coverage test, gofer will support this later
+        c := make(chan os.Signal, 1)
+        signal.Notify(c, os.Interrupt)
+        done := make(chan struct{})
+        go func() </span><span class="cov1" title="1">{
+                &lt;-c
+                done &lt;- struct{}{}
+        }</span>()
+        <span class="cov1" title="1">fmt.Println("This is the test for go coverage")
+        //end for coverage test
+
+        event.MdpEventInit()
+
+        FOR_LOOP:
+        for </span><span class="cov10" title="1100660101">{
+                select </span>{
+                case &lt;-exit:<span class="cov0" title="0">
+                        break</span>
+                case &lt;-done:<span class="cov1" title="1">
+                        break FOR_LOOP</span>
+                default:<span class="cov9" title="1100660100"></span>
+
+                }
+        }
+
+        <span class="cov1" title="1">fmt.Println("EBM main exited!!")</span>
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

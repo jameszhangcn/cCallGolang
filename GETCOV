@@ -1,0 +1,33 @@
+#!/bin/sh
+
+usage () {
+    echo ""
+    echo "Get the coverage for unit and integate test"
+    echo "example: ./event-cov output_path"
+}
+
+go_test() {
+    go test -v -c -covermode=count -coverpkg ./...
+    ./events.test -systemTest -test.coverprofile test.cov &
+    sleep 30s
+    pid_server=`ps -ef | grep "events.test -systemTest" | grep -v "grep" | awk '{print $2}'`
+    kill -2 $pid_server
+    sleep 10s
+    go tool cover -html=./test.cov -o ./coverage/coverage.html
+    gocover-cobertura < test.cov > ./coverage/coverage.xml
+}
+
+
+####################################
+# main body of COV script
+####################################
+
+[ $# eq 1 -o $# -eq 2 -o $# -eq 3 ] || usage
+
+TOP_DIR=`pwd | xargs dirname`
+echo "TOP_DIR=$TOP_DIR"
+
+go_test
+
+echo "coverage finished"
+exit 0
